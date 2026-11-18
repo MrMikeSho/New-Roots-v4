@@ -16,7 +16,7 @@
     <div class="notice" id="prev" hidden>Preview mode: profiles save once Supabase is connected (see README).</div>
     <label>Full name</label><input name="full_name" required maxlength="60">
     <div class="row2"><div><label>Phone / WhatsApp</label><input name="phone" inputmode="tel" placeholder="+2637..."></div>
-    <div><label>City</label><select name="city"><option value="">Select…</option><option>Harare</option><option>Bulawayo</option><option>Mutare</option></select></div></div>
+    <div><label>City</label><select name="city"><option value="">Select…</option><option>Harare</option></select></div></div>
     <label>Number of children</label><input name="children" type="number" min="0" max="20">
     <label>About you (optional)</label><textarea name="about" rows="3" maxlength="300" placeholder="A little about you and your family"></textarea>
     <label style="display:flex;gap:10px;align-items:center;font-weight:500"><input type="checkbox" name="public" style="width:auto"> Show me on Member Profiles so other families can find me</label>
@@ -24,13 +24,23 @@
     <div class="msg" id="pmsg"></div>
     <button class="linkbtn" type="button" id="lo">Log out</button>
   </form>
-</div></main>
+</div>
+<section class="profbox minebox"><h2>My posts &amp; adverts</h2><p class="sheetsub">Tap ⋯ on any post to edit, hide or delete it.</p><div id="mine" class="flist"></div><button class="linkbtn" id="unhide" hidden></button></section></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data.js"></script>
 <script src="core.js"></script>
+<script src="social.js"></script>
 <script>
+function renderMine(){
+  $("#mine").innerHTML=MY.map(r=>`<div class="mine">${statusBadge(r)}${r._t==="post"?postCard(r):listingCard(r)}</div>`).join("")||'<div class="empty">You haven\'t posted anything yet.</div>';
+  const u=$("#unhide");u.hidden=!HID.size;u.textContent="Show the "+HID.size+" post(s) I hid from my feed";
+  armReveal();
+}
+window.pageRefresh=async()=>{await loadMine();renderMine()};
 boot().then(()=>{
+  $("#unhide").onclick=()=>{HID.clear();try{localStorage.removeItem("rr_hidden")}catch(e){};renderMine();toast("Hidden posts are back in your feed")};
+  if(USER||!LIVE)pageRefresh();
   if(!LIVE)$("#prev").hidden=false;
   else if(!USER){location.href="login.html?next=profile.html";return}
   const f=$("#pf"),p=PROFILE||{};
