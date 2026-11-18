@@ -158,7 +158,7 @@ async function loadData(){
   if(!db)return;
   try{
     const l=await db.from("listings").select("*").eq("approved",true).eq("hidden",false).order("created_at",{ascending:false});
-    if(l.data)window.listings=l.data;
+    if(l.data?.length)window.listings=l.data;
     const n=await db.from("news").select("*").order("published",{ascending:false});
     if(n.data?.length)window.news=n.data.map(x=>({...x,date:x.published}));
     const p=await db.from("posts").select("*").eq("approved",true).eq("hidden",false).order("created_at",{ascending:false});
@@ -305,7 +305,6 @@ function setAuthed(){
   document.documentElement.classList.toggle("authed",on);
 }
 async function boot(pageRender){
-  if(LIVE)window.listings=[];
   layout();fillCities();authDialog();wireBoards();scrollPill();$$("dialog").forEach(dlgPill);particles();
   const draw=()=>{pageRender&&pageRender();armReveal();spot()};window.REDRAW=draw;
   draw();paintAccount();applyConfigLinks();
