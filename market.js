@@ -2,7 +2,9 @@ let fCity="All",fCat="all",q=new URLSearchParams(location.search).get("q")?.toLo
 if(q)$("#q").value=q;
 const pc=new URLSearchParams(location.search).get("cat");if(pc&&CATS[pc])fCat=pc;
 function render(){
-  if(!$("#cityf")){$("#cities").innerHTML='<label class="cityf">📍 <select id="cityf"><option value="All">All cities in Zimbabwe</option>'+CITIES.map(c=>`<option>${c}</option>`).join("")+'</select></label>';$("#cityf").onchange=e=>{fCity=e.target.value;render();armReveal();spot()}}
+  const TOP=["Harare","Bulawayo","Mutare"],rest=CITIES.filter(x=>!TOP.includes(x));
+  $("#cities").innerHTML='<span style="color:var(--brand)">⛉</span>'+["All",...TOP].map(c=>`<button class="chip ${fCity===c?"on":""}" data-city="${c}">${c==="All"?"📍 All Cities":c}</button>`).join("")+`<select class="moresel ${rest.includes(fCity)?"on":""}" id="cityf"><option value="">More cities…</option>${rest.map(x=>`<option ${x===fCity?"selected":""}>${x}</option>`).join("")}</select>`;
+  $("#cityf").onchange=e=>{if(e.target.value){fCity=e.target.value;render();armReveal();spot()}};
   $("#cats").innerHTML=[["all","All"],...Object.entries(CATS)].map(([k,v])=>`<button class="chip dark ${fCat===k?"on":""}" data-cat="${k}">${v}</button>`).join("");
   $("#catcards").innerHTML=Object.entries(CATS).map(([k,v])=>`<button class="cat ${fCat===k?"sel":""}" data-cat="${k}"><div class="ic ${k}">${ICON[k]}</div><b>${v}</b><small>${listings.filter(l=>l.category===k).length} listings</small></button>`).join("");
   const rows=listings.filter(l=>(fCity==="All"||l.city===fCity)&&(fCat==="all"||l.category===fCat)&&(!q||(l.title+l.description+l.city).toLowerCase().includes(q)));
