@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Post – Rudo Roots</title>
+<meta name="description" content="A post from the Rudo Roots village.">
+<meta name="theme-color" content="#c2570c">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main><div class="wrap" style="max-width:720px;padding:28px 16px 70px"><a class="backl" href="index.html">← Back to the village</a><div id="one" style="margin-top:16px"></div></div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="core.js"></script>
+<script src="social.js"></script>
+<script>
+const qp=new URLSearchParams(location.search),T=qp.get("t")==="listing"?"listing":"post",ID=qp.get("id");
+async function showOne(){
+  let r=null;
+  if(LIVE&&ID&&!sample(ID)){const x=await db.from(T==="post"?"posts":"listings").select("*").eq("id",ID).maybeSingle();r=x.data}
+  else r=(T==="post"?posts:listings).find(p=>String(p.id)===ID);
+  if(!r||r.hidden||r.approved===false&&!(USER&&r.user_id===USER.id)){$("#one").innerHTML='<div class="empty">This post is no longer available.</div>';return}
+  document.title=r.title+" – Rudo Roots";
+  $("#one").innerHTML=T==="post"?postCard(r):listingCard(r);armReveal();
+}
+window.pageRefresh=showOne;
+boot().then(showOne);
+</script>
+</body>
+</html>
