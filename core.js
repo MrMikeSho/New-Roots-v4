@@ -24,6 +24,8 @@ function layout(){
     <a data-board="gathering">📅 Parenting Gatherings</a>
     <a data-board="help">⚠️ Support Requests</a>
     <a href="marketplace.html">🛍 Marketplace</a>
+    <a href="saved.html">🔖 Saved posts</a>
+    <a href="profile.html">👤 My profile &amp; posts</a>
   </nav>
   <a class="emerg" href="support.html">📞 Emergency Support</a>
 </aside>`);
@@ -45,9 +47,12 @@ function layout(){
     <b>Add yours</b>
     <label>Title</label><input name="title" required maxlength="90">
     <label>Details</label><textarea name="body" rows="3" required maxlength="400"></textarea>
-    <label>City</label><select name="city"><option>Harare</option><option>Bulawayo</option><option>Mutare</option></select>
+    <label>City</label><select name="city"><option>Harare</option></select>
     <label>Your name</label><input name="contact_name" required maxlength="40">
     <label>Phone / WhatsApp</label><input name="phone" required inputmode="tel" placeholder="+2637...">
+    <label>Photos or files (optional)</label>
+    <label class="filebtn" for="bfile">📷 Add photos / files</label><input type="file" id="bfile" accept="image/*,application/pdf" multiple hidden>
+    <div class="thumbs" id="bthumbs"></div><small style="color:#6b7280">Up to 3 · photos are shrunk automatically to save data</small>
     <div class="row" style="margin-top:16px"><button class="btn" type="submit">Submit</button><button class="chip" type="button" id="bclose">Close</button></div>
     <div class="msg" id="bmsg"></div>
   </form>
@@ -152,13 +157,63 @@ let posts=(!LIVE&&window.SAMPLE_POSTS)?SAMPLE_POSTS.slice():[];
 async function loadData(){
   if(!db)return;
   try{
-    const l=await db.from("listings").select("*").eq("approved",true).order("created_at",{ascending:false});
-    if(l.data?.length)window.listings=l.data;
+    const l=await db.from("listings").select("*").eq("approved",true).eq("hidden",false).order("created_at",{ascending:false});
+    if(l.data)window.listings=l.data;
     const n=await db.from("news").select("*").order("published",{ascending:false});
     if(n.data?.length)window.news=n.data.map(x=>({...x,date:x.published}));
-    const p=await db.from("posts").select("*").eq("approved",true).order("created_at",{ascending:false});
+    const p=await db.from("posts").select("*").eq("approved",true).eq("hidden",false).order("created_at",{ascending:false});
     if(p.data)posts=p.data;
   }catch(e){console.warn(e)}
+}
+
+
+/* ---------- photo / file attachments ---------- */
+function filePicker(inp,strip){
+  const st={files:[]};
+  const draw=()=>{strip.innerHTML=st.files.map((f,i)=>`<div class="th">${f.type.startsWith("image/")?`<img src="${URL.createObjectURL(f)}" alt="">`:`<span>📄 ${esc(f.name.slice(0,12))}</span>`}<button type="button" data-rm="${i}" aria-label="Remove">✕</button></div>`).join("")};
+  inp.onchange=()=>{for(const f of inp.files){if(st.files.length>=3)break;if(f.size>15e6){alert(f.name+" is too big (max 15MB).");continue}st.files.push(f)}inp.value="";draw()};
+  strip.onclick=e=>{const b=e.target.closest("[data-rm]");if(b){st.files.splice(+b.dataset.rm,1);draw()}};
+  st.clear=()=>{st.files=[];draw()};
+  return st;
+}
+function shrink(file){
+  return new Promise(res=>{
+    const img=new Image();img.onload=()=>{
+      const k=Math.min(1,1280/Math.max(img.width,img.height)),cv=document.createElement("canvas");
+      cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      cv.toBlob(b=>res(b||file),"image/jpeg",.82)};
+    img.onerror=()=>res(file);img.src=URL.createObjectURL(file);
+  });
+}
+async function uploadAll(files){
+  const urls=[];
+  for(const [i,f] of files.entries()){
+    const isImg=f.type.startsWith("image/");
+    if(!isImg&&f.size>3e6)throw new Error(f.name+" is over 3MB.");
+    const blob=isImg?await shrink(f):f,ext=isImg?"jpg":"pdf",path=`${USER.id}/${Date.now()}-${i}.${ext}`;
+    const r=await db.storage.from("uploads").upload(path,blob,{contentType:isImg?"image/jpeg":"application/pdf"});
+    if(r.error)throw r.error;
+    urls.push(db.storage.from("uploads").getPublicUrl(path).data.publicUrl);
+  }
+  return urls;
+}
+const attsHtml=a=>(a&&a.length)?`<div class="atts">${a.map(u=>/\.pdf($|\?)/i.test(u)?`<a class="pdf" href="${esc(u)}" target="_blank" rel="noopener">📎 Document</a>`:`<a href="${esc(u)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(u)}" alt="attached photo"></a>`).join("")}</div>`:"";
+
+/* ---------- floating page up / down ---------- */
+function scrollPill(){
+  document.body.insertAdjacentHTML("beforeend",`<div id="sp" hidden><button id="sup" aria-label="Page up">↑</button><button id="sdn" aria-label="Page down">↓</button></div>`);
+  const up=$("#sup"),dn=$("#sdn"),sp=$("#sp");
+  const upd=()=>{const max=document.documentElement.scrollHeight-innerHeight;up.hidden=scrollY<200;dn.hidden=scrollY>max-120;sp.hidden=!!document.querySelector("dialog[open]")||max<300||(up.hidden&&dn.hidden)};
+  up.onclick=()=>scrollBy({top:-innerHeight*.85,behavior:"smooth"});
+  dn.onclick=()=>scrollBy({top:innerHeight*.85,behavior:"smooth"});
+  addEventListener("scroll",upd,{passive:true});addEventListener("resize",upd);setInterval(upd,700);upd();
+}
+function dlgPill(d){
+  d.insertAdjacentHTML("beforeend",`<div class="dsp"><div><button type="button" data-d="-1" aria-label="Page up">↑</button><button type="button" data-d="1" aria-label="Page down">↓</button></div></div>`);
+  const w=d.querySelector(".dsp"),b=[...w.querySelectorAll("button")];
+  const upd=()=>{const max=d.scrollHeight-d.clientHeight;w.hidden=max<40;b[0].hidden=d.scrollTop<40;b[1].hidden=d.scrollTop>max-40};
+  w.onclick=e=>{const x=e.target.closest("[data-d]");if(x)d.scrollBy({top:x.dataset.d*d.clientHeight*.8,behavior:"smooth"})};
+  d.addEventListener("scroll",upd,{passive:true});new MutationObserver(upd).observe(d,{attributes:true,attributeFilter:["open"]});setTimeout(upd,200);
 }
 
 /* ---------- community boards (dialog on every page) ---------- */
@@ -166,7 +221,7 @@ let curBoard="help";
 function openBoard(t){
   curBoard=t;const B=BOARDS[t];$("#bt").textContent=B.t;$("#bb").textContent=B.b;$("#bmsg").textContent="";
   const rows=posts.filter(p=>p.type===t);
-  $("#bl").innerHTML=rows.map(p=>`<div class="post"><b>${esc(p.title)}</b><div>${esc(p.body)}</div><small>📍 ${esc(p.city)} · 👤 ${esc(p.contact_name)} · <a href="tel:${esc(p.phone)}">${esc(p.phone)}</a></small></div>`).join("")||'<p style="color:#6b7280">Nothing here yet — be the first to post.</p>';
+  $("#bl").innerHTML=rows.map(p=>`<div class="post"><b>${esc(p.title)}</b><div>${esc(p.body)}</div><small>📍 ${esc(p.city)} · 👤 ${esc(p.contact_name)} · <a href="tel:${esc(p.phone)}">${esc(p.phone)}</a></small>${attsHtml(p.attachments)}${actionBar("post",p)}</div>`).join("")||'<p style="color:#6b7280">Nothing here yet — be the first to post.</p>';
   const f=$("#bform");f.contact_name.value=displayName()&&!/^\+?\d/.test(displayName())?displayName():f.contact_name.value;
   if(PROFILE?.phone&&!f.phone.value)f.phone.value=PROFILE.phone;
   if(PROFILE?.city)f.city.value=PROFILE.city;
@@ -175,14 +230,21 @@ function openBoard(t){
 function wireBoards(){
   document.addEventListener("click",e=>{const b=e.target.closest("[data-board]");if(b){e.preventDefault();dOpen(false);openBoard(b.dataset.board)}});
   $("#bclose").onclick=()=>$("#board").close();
+  const bp=filePicker($("#bfile"),$("#bthumbs"));
   $("#bform").onsubmit=async e=>{
     e.preventDefault();
     if(needLogin())return;
-    const d=Object.fromEntries(new FormData(e.target));
+    const d=Object.fromEntries(new FormData(e.target));delete d.undefined;
     if(!db){$("#bmsg").textContent="Preview only — connect Supabase to receive real posts.";return}
-    const r=await db.from("posts").insert({...d,type:curBoard,approved:false});
-    $("#bmsg").textContent=r.error?"Something went wrong. Please try again.":"Thank you! It will appear once approved.";
-    if(!r.error)e.target.reset();
+    const btn=e.submitter||e.target.querySelector("[type=submit]");btn.disabled=true;
+    try{
+      $("#bmsg").textContent=bp.files.length?"Uploading…":"Sending…";
+      const attachments=bp.files.length?await uploadAll(bp.files):[];
+      const r=await db.from("posts").insert({...d,type:curBoard,approved:false,attachments});
+      if(r.error)throw r.error;
+      $("#bmsg").textContent="Thank you! It will appear once approved.";e.target.reset();bp.clear();
+    }catch(err){$("#bmsg").textContent="Could not send: "+(err.message||"please try again.")}
+    btn.disabled=false;
   };
 }
 
@@ -235,18 +297,19 @@ function applyConfigLinks(){
 /* ---------- logged-in home feed helpers ---------- */
 const PT={help:"🤲",gathering:"📅",donation:"🎁",swap:"☺",resource:"📖",member:"👤"};
 function ago(d){const s=(Date.now()-new Date(d))/1000;if(!(s>=0))return"";if(s<3600)return Math.max(1,Math.round(s/60))+" min ago";if(s<86400)return Math.round(s/3600)+" h ago";if(s<604800)return Math.round(s/86400)+" d ago";return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
-const postCard=p=>`<article class="fp"><div class="fp-top"><span class="fp-av">${esc(initials(p.contact_name))}</span><div><b>${esc(p.contact_name)}</b><small>📍 ${esc(p.city||"")} · ${ago(p.created_at)}</small></div><span class="tag pt">${PT[p.type]||""} ${esc(BOARDS[p.type]?.t||"")}</span></div><h3>${esc(p.title)}</h3><p>${esc(p.body)}</p><a class="phone" href="tel:${esc(p.phone)}">📞 ${esc(p.phone)}</a></article>`;
-const listingCard=l=>`<article class="card"><div class="top"><div class="ic ${l.category}">${ICON[l.category]}</div><div><h3>${esc(l.title)}</h3><span class="tag t-${l.category}">${CATS[l.category]}</span><span class="tag c-${l.city}">📍 ${l.city}</span></div></div><p>${esc(l.description)}</p><div class="row"><span class="price">$ ${esc((l.price||"").replace(/^\$/,""))}</span><span style="color:#6b7280">👤 ${esc(l.contact_name)}</span></div><div style="margin-top:10px"><a class="phone" href="tel:${esc(l.phone)}">📞 ${esc(l.phone)}</a></div></article>`;
+const postCard=p=>HID.has(key("post",p.id))?"":`<article class="fp"><div class="fp-top"><span class="fp-av">${esc(initials(p.contact_name))}</span><div><b>${esc(p.contact_name)}</b><small>📍 ${esc(p.city||"")} · ${ago(p.created_at)}</small></div><span class="tag pt">${PT[p.type]||""} ${esc(BOARDS[p.type]?.t||"")}</span></div>${p.orig_author?`<div class="rp">🔁 Reposted · originally by ${esc(p.orig_author)}</div>`:""}<h3>${esc(p.title)}</h3><p>${esc(p.body)}</p>${attsHtml(p.attachments)}<a class="phone" href="tel:${esc(p.phone)}">📞 ${esc(p.phone)}</a>${actionBar("post",p)}</article>`;
+const listingCard=l=>HID.has(key("listing",l.id))?"":`<article class="card"><div class="top"><div class="ic ${l.category}">${ICON[l.category]}</div><div><h3>${esc(l.title)}</h3><span class="tag t-${l.category}">${CATS[l.category]}</span><span class="tag ${cityClass(l.city)}">📍 ${l.city}</span></div></div><p>${esc(l.description)}</p>${attsHtml(l.attachments)}<div class="row"><span class="price">$ ${esc((l.price||"").replace(/^\$/,""))}</span><span style="color:#6b7280">👤 ${esc(l.contact_name)}</span></div><div style="margin-top:10px"><a class="phone" href="tel:${esc(l.phone)}">📞 ${esc(l.phone)}</a></div>${actionBar("listing",l)}</article>`;
 const newsCard=n=>`<article class="ncard"><div class="nimg c-${esc((n.tag||"").toLowerCase())}" style="${n.image?`--img:url(${esc(n.image)})`:""}"><span class="a">${esc(n.tag)}</span><span class="b">${esc(n.source)}</span></div><div class="nbody"><div class="date">📅 ${new Date(n.date).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}</div><h3>${esc(n.title)}</h3><p>${esc(n.excerpt)}</p><a href="${esc(n.url||"#")}" target="_blank" rel="noopener">Read full article ↗</a></div></article>`;
 function setAuthed(){
   const on=LIVE?!!USER:/[?&]feed=1/.test(location.search);
   document.documentElement.classList.toggle("authed",on);
 }
 async function boot(pageRender){
-  layout();authDialog();wireBoards();particles();
-  const draw=()=>{pageRender&&pageRender();armReveal();spot()};
+  if(LIVE)window.listings=[];
+  layout();fillCities();authDialog();wireBoards();scrollPill();$$("dialog").forEach(dlgPill);particles();
+  const draw=()=>{pageRender&&pageRender();armReveal();spot()};window.REDRAW=draw;
   draw();paintAccount();applyConfigLinks();
   addEventListener("scroll",onScroll,{passive:true});addEventListener("resize",onScroll);setTimeout(spot,300);
-  await Promise.all([loadUser(),loadData()]);
+  await Promise.all([loadUser(),loadData()]);await loadSocial();
   setAuthed();paintAccount();draw();
 }
