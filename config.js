@@ -1,7 +1,7 @@
 /* ===== SETTINGS: edit these (the only file you need to change) ===== */
 window.CONFIG = {
-  SUPABASE_URL: "",      // e.g. https://xxxx.supabase.co  ("" = preview mode with sample data)
-  SUPABASE_ANON_KEY: "", // Supabase > Project Settings > API > anon public key
+  SUPABASE_URL: "https://qivhnbfrcvmyvcbahzxq.supabase.co",      // e.g. https://xxxx.supabase.co  ("" = preview mode with sample data)
+  SUPABASE_ANON_KEY: "sb_publishable_4lQpS-Px6uzceVtstY1z3Q_RIt6swiX", // Supabase > Project Settings > API > anon public key
   HELPLINE: "",          // e.g. +263712000000
   WHATSAPP_LINK: "",     // e.g. https://chat.whatsapp.com/XXXX
   EMAIL: "",             // e.g. hello@yourdomain.co.zw
