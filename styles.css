@@ -81,7 +81,7 @@ dialog input,dialog select,dialog textarea{width:100%;padding:12px;font:inherit;
 .vhero{grid-template-columns:minmax(0,1fr)}.vhero .in{max-width:680px;width:100%;min-width:0}.vhero h1 em{overflow-wrap:anywhere}
 .vhero .pillw{display:inline-block;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);padding:12px 26px;border-radius:999px;font-weight:600;font-size:18px}
 .vhero h1{margin:26px 0 8px;font-size:clamp(30px,6vw,46px);font-weight:600}
-.vhero h1 em{display:block;font-style:normal;font-weight:800;font-size:clamp(40px,10vw,84px);line-height:1.05;background:linear-gradient(90deg,#e0711c,#f3b27a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.vhero h1 em{display:block;font-style:normal;font-weight:800;font-size:clamp(40px,10vw,84px);line-height:1.05;background:linear-gradient(90deg,#d4620f 0%,#f08a3c 22%,#fff1e0 50%,#f08a3c 78%,#d4620f 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 3.6s ease-in-out infinite alternate}
 .vhero p{font-size:21px;margin:22px 0 30px;color:#f1e4d8}
 .vsearch{display:flex;gap:8px;background:#fff;border-radius:18px;padding:10px;max-width:560px;margin:auto}
 .vsearch input{flex:1;border:0;font-size:17px;padding:10px;outline:0;min-width:0;background:transparent}
@@ -119,10 +119,11 @@ dialog input,dialog select,dialog textarea{width:100%;padding:12px;font:inherit;
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes glow{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:.55;transform:scale(1.15)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.08)}}
+@keyframes kenburns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.14) translate(-2%,-1.5%)}}
+@keyframes shimmer{from{background-position:0% 50%}to{background-position:100% 50%}}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,93,11,.45)}70%{box-shadow:0 0 0 16px rgba(217,93,11,0)}}
 .vhero{overflow:hidden;background-color:#2b1a10}
-.vhero::before{content:"";position:absolute;inset:0;background:var(--hero-img,none) center 28%/cover;animation:kenburns 18s ease-in-out infinite alternate;opacity:.55}
+.vhero::before{content:"";position:absolute;inset:0;background:var(--hero-img,none) center 28%/cover;animation:kenburns 14s ease-in-out infinite alternate;opacity:.55}
 .vhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,12,8,.35),rgba(20,12,8,.8))}
 .vhero .in{position:relative;z-index:2}
 .vhero .pillw,.vhero h1,.vhero p,.vhero .vsearch,.vhero .vbtns,.vhero .hstats{opacity:0;animation:fadeUp .8s cubic-bezier(.2,.7,.2,1) forwards}
@@ -302,3 +303,9 @@ html.authed .vhero,html.authed .glance,html.authed #hubband,html.authed #stats{d
 .cityf{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:6px 14px;box-shadow:0 4px 14px rgba(0,0,0,.08);max-width:420px;margin:0 auto}.cityf select{flex:1;border:0;padding:10px 4px;font:600 17px inherit;background:transparent}
 :where(.tag[class*="c-"]){background:#6366f1}
 #cform input{width:auto!important;min-width:0}#cform .btn{width:auto!important;margin:0!important;flex:none}
+
+/* restored: city chips + "more cities", news loading spinner */
+.chips .moresel{border:0;border-radius:30px;padding:12px 18px;background:#f3f4f6;font:600 17px inherit;font-family:inherit;color:#374151;max-width:210px}
+.chips .moresel.on{background:#d4620f;color:#fff}
+.nload{grid-column:1/-1;text-align:center;padding:70px 10px;color:#4b5563;font-size:19px}
+.nload .ring{width:46px;height:46px;border:4px solid #fbd5b5;border-top-color:#d4620f;border-radius:50%;margin:0 auto 22px;animation:spin .9s linear infinite}
