@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>My profile – Rudo Roots</title>
+<meta name="description" content="Your Rudo Roots profile.">
+<meta name="theme-color" content="#c2570c">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main><div class="profbox" id="pb">
+  <div class="profhead"><div class="av" id="av">?</div><div><h2 id="pn">Your profile</h2><span id="pm"></span></div></div>
+  <form class="formbox" id="pf">
+    <div class="notice" id="prev" hidden>Preview mode: profiles save once Supabase is connected (see README).</div>
+    <label>Full name</label><input name="full_name" required maxlength="60">
+    <div class="row2"><div><label>Phone / WhatsApp</label><input name="phone" inputmode="tel" placeholder="+2637..."></div>
+    <div><label>City</label><select name="city"><option value="">Select…</option><option>Harare</option><option>Bulawayo</option><option>Mutare</option></select></div></div>
+    <label>Number of children</label><input name="children" type="number" min="0" max="20">
+    <label>About you (optional)</label><textarea name="about" rows="3" maxlength="300" placeholder="A little about you and your family"></textarea>
+    <label style="display:flex;gap:10px;align-items:center;font-weight:500"><input type="checkbox" name="public" style="width:auto"> Show me on Member Profiles so other families can find me</label>
+    <button class="btn" type="submit" style="width:100%;text-align:center">Save profile</button>
+    <div class="msg" id="pmsg"></div>
+    <button class="linkbtn" type="button" id="lo">Log out</button>
+  </form>
+</div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="core.js"></script>
+<script>
+boot().then(()=>{
+  if(!LIVE)$("#prev").hidden=false;
+  else if(!USER){location.href="login.html?next=profile.html";return}
+  const f=$("#pf"),p=PROFILE||{};
+  f.full_name.value=p.full_name||USER?.user_metadata?.full_name||USER?.user_metadata?.name||"";
+  f.phone.value=p.phone||USER?.phone&&("+"+USER.phone.replace(/^\+/,""))||"";
+  f.city.value=p.city||"";f.children.value=p.children??"";f.about.value=p.about||"";f.public.checked=!!p.public;
+  const n=f.full_name.value,pic=p.avatar_url||USER?.user_metadata?.avatar_url;
+  $("#pn").textContent=n||"Welcome!";$("#pm").textContent=USER?.email||USER?.phone||"";
+  $("#av").innerHTML=pic?`<img src="${esc(pic)}" alt="">`:esc(initials(n));
+  f.onsubmit=async e=>{
+    e.preventDefault();if(!LIVE){$("#pmsg").textContent="Preview only — connect Supabase to save.";return}
+    const d=Object.fromEntries(new FormData(f));
+    const row={id:USER.id,full_name:d.full_name,phone:d.phone||null,city:d.city||null,children:d.children===""?null:+d.children,about:d.about||null,public:f.public.checked,avatar_url:pic||null};
+    const r=await db.from("profiles").upsert(row);
+    $("#pmsg").textContent=r.error?"Could not save: "+r.error.message:"Saved ✓";
+    if(!r.error){PROFILE=row;$("#pn").textContent=row.full_name;paintAccount()}
+  };
+  $("#lo").onclick=async()=>{if(db)await db.auth.signOut();location.href="index.html"};
+});
+</script>
+</body>
+</html>

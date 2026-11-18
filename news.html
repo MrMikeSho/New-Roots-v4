@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Village Updates – Rudo Roots</title>
+<meta name="description" content="Community news and parenting tips for single parents.">
+<meta name="theme-color" content="#c2570c">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<section class="band" id="news" style="background:#f9fafb">
+  <div class="wrap center">
+    <span class="pill">Community News</span>
+    <h2>Community News &amp; Tips</h2>
+    <p class="sub">Parenting advice, community stories, and updates for single parents</p>
+    <div class="news" id="newslist"></div>
+    <p class="note">News updates automatically every 30 minutes</p>
+    <button class="refresh" id="refresh"><span>⟳</span> Refresh News Now</button>
+  </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="core.js"></script>
+<script src="news.js"></script>
+</body>
+</html>
