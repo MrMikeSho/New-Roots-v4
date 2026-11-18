@@ -148,7 +148,7 @@ function needLogin(){
 }
 
 /* ---------- data ---------- */
-let posts=[];
+let posts=(!LIVE&&window.SAMPLE_POSTS)?SAMPLE_POSTS.slice():[];
 async function loadData(){
   if(!db)return;
   try{
@@ -232,11 +232,21 @@ function applyConfigLinks(){
 }
 
 /* ---------- boot: pages call boot(renderFn) ---------- */
+/* ---------- logged-in home feed helpers ---------- */
+const PT={help:"🤲",gathering:"📅",donation:"🎁",swap:"☺",resource:"📖",member:"👤"};
+function ago(d){const s=(Date.now()-new Date(d))/1000;if(!(s>=0))return"";if(s<3600)return Math.max(1,Math.round(s/60))+" min ago";if(s<86400)return Math.round(s/3600)+" h ago";if(s<604800)return Math.round(s/86400)+" d ago";return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+const postCard=p=>`<article class="fp"><div class="fp-top"><span class="fp-av">${esc(initials(p.contact_name))}</span><div><b>${esc(p.contact_name)}</b><small>📍 ${esc(p.city||"")} · ${ago(p.created_at)}</small></div><span class="tag pt">${PT[p.type]||""} ${esc(BOARDS[p.type]?.t||"")}</span></div><h3>${esc(p.title)}</h3><p>${esc(p.body)}</p><a class="phone" href="tel:${esc(p.phone)}">📞 ${esc(p.phone)}</a></article>`;
+const listingCard=l=>`<article class="card"><div class="top"><div class="ic ${l.category}">${ICON[l.category]}</div><div><h3>${esc(l.title)}</h3><span class="tag t-${l.category}">${CATS[l.category]}</span><span class="tag c-${l.city}">📍 ${l.city}</span></div></div><p>${esc(l.description)}</p><div class="row"><span class="price">$ ${esc((l.price||"").replace(/^\$/,""))}</span><span style="color:#6b7280">👤 ${esc(l.contact_name)}</span></div><div style="margin-top:10px"><a class="phone" href="tel:${esc(l.phone)}">📞 ${esc(l.phone)}</a></div></article>`;
+const newsCard=n=>`<article class="ncard"><div class="nimg c-${esc((n.tag||"").toLowerCase())}" style="${n.image?`--img:url(${esc(n.image)})`:""}"><span class="a">${esc(n.tag)}</span><span class="b">${esc(n.source)}</span></div><div class="nbody"><div class="date">📅 ${new Date(n.date).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}</div><h3>${esc(n.title)}</h3><p>${esc(n.excerpt)}</p><a href="${esc(n.url||"#")}" target="_blank" rel="noopener">Read full article ↗</a></div></article>`;
+function setAuthed(){
+  const on=LIVE?!!USER:/[?&]feed=1/.test(location.search);
+  document.documentElement.classList.toggle("authed",on);
+}
 async function boot(pageRender){
   layout();authDialog();wireBoards();particles();
   const draw=()=>{pageRender&&pageRender();armReveal();spot()};
   draw();paintAccount();applyConfigLinks();
   addEventListener("scroll",onScroll,{passive:true});addEventListener("resize",onScroll);setTimeout(spot,300);
   await Promise.all([loadUser(),loadData()]);
-  paintAccount();draw();
+  setAuthed();paintAccount();draw();
 }
