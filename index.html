@@ -8,8 +8,12 @@
 <meta name="theme-color" content="#c2570c">
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="stylesheet" href="styles.css">
+<script>try{if(/[?&]feed=1/.test(location.search)||Object.keys(localStorage).some(function(k){return/^sb-.*-auth-token$/.test(k)}))document.documentElement.classList.add("authed")}catch(e){}</script>
 </head>
 <body>
+
+<section class="fgreet" id="fgreet"><div class="wrap"><div><small>Hi <span id="fname">there</span> 👋</small><h1>The Village Hub</h1><p>What's happening in your village right now</p></div><button class="btn" id="fpost" data-board="help">＋ Post to the village</button></div></section>
+
 <section class="vhero">
   <div class="pts" id="pts"></div>
   <div class="in">
@@ -48,7 +52,16 @@
     <a class="qc" href="support.html" style="background:#f3e7ea"><div class="ic g-emg">📞</div><b>Emergency Support</b><small>24/7 community help</small></a>
   </div>
 </div></section>
-<section class="band"><div class="wrap center">
+
+<section class="band feed" id="feed"><div class="wrap">
+  <div class="fsec"><h2>🫂 Community Feed</h2><div class="chips" id="fchips"></div><div class="flist" id="f-posts"></div></div>
+  <div class="fsec"><div class="fh"><h2>📰 Village Updates</h2><a href="news.html">See all →</a></div><div class="news" id="f-news"></div></div>
+  <div class="fsec"><div class="fh"><h2>💼 Jobs &amp; Piece Work</h2><a href="marketplace.html?cat=jobs">See all →</a></div><div class="list" id="f-jobs"></div></div>
+  <div class="fsec"><div class="fh"><h2>🏠 Housing &amp; Marketplace</h2><a href="marketplace.html">See all →</a></div><div class="list" id="f-mkt"></div></div>
+  <div class="fsec"><div class="fh"><h2>⛪ Churches &amp; Community</h2><a href="marketplace.html?cat=community">See all →</a></div><div class="list" id="f-com"></div></div>
+</div></section>
+
+<section class="band" id="hubband"><div class="wrap center">
   <span class="eyebrow soft">The Village Hub</span>
   <h2>Everything Your Village<br><span class="h2o">Needs, Together</span></h2>
   <p class="sub">Community features built for single parents across Zimbabwe</p>
@@ -87,7 +100,21 @@
 <script src="core.js"></script>
 <script>
 document.getElementById("vsearch").onsubmit=e=>{e.preventDefault();location.href="marketplace.html?q="+encodeURIComponent($("#vq").value.trim())};
-boot(()=>{const c=(id,v)=>{const e=$(id);if(e)e.textContent=v};c("#n-gather",posts.filter(p=>p.type==="gathering").length);c("#n-help",posts.filter(p=>p.type==="help").length);c("#n-mkt",listings.length)});
+let fType="all";
+function renderFeed(){
+  const c=(id,v)=>{const e=$(id);if(e)e.textContent=v};
+  c("#n-gather",posts.filter(p=>p.type==="gathering").length);c("#n-help",posts.filter(p=>p.type==="help").length);c("#n-mkt",listings.length);
+  if(!document.documentElement.classList.contains("authed"))return;
+  const nm=displayName();c("#fname",nm&&!/^\+?\d/.test(nm)?nm.split(" ")[0]:"there");
+  $("#fchips").innerHTML=[["all","All"],...Object.entries(BOARDS).filter(([k])=>k!=="member").map(([k,v])=>[k,v.t])].map(([k,v])=>`<button class="chip ${fType===k?"on":""}" data-ft="${k}">${v}</button>`).join("");
+  const ps=posts.filter(p=>fType==="all"||p.type===fType).slice(0,8);
+  $("#f-posts").innerHTML=ps.map(postCard).join("")||'<div class="empty">Nothing here yet — be the first to post to the village.</div>';
+  $("#f-news").innerHTML=news.slice(0,3).map(newsCard).join("");
+  const by=k=>listings.filter(l=>l.category===k).slice(0,3).map(listingCard).join("")||'<div class="empty">No listings yet.</div>';
+  $("#f-jobs").innerHTML=by("jobs");$("#f-mkt").innerHTML=by("housing");$("#f-com").innerHTML=by("community");
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ft]");if(b){fType=b.dataset.ft;renderFeed();armReveal();spot()}});
+boot(renderFeed);
 </script>
 </body>
 </html>
