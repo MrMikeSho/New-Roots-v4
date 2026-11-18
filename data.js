@@ -1,5 +1,5 @@
 /* Sample content shown in preview mode (and until Supabase has rows) */
-const CITIES=["Harare","Bulawayo","Mutare"];
+const CITIES=["Harare", "Bulawayo", "Mutare", "Banket", "Beatrice", "Beitbridge", "Bindura", "Birchenough Bridge", "Chegutu", "Chimanimani", "Chinhoyi", "Chipinge", "Chiredzi", "Chirundu", "Chitungwiza", "Chivhu", "Concession", "Epworth", "Filabusi", "Gokwe", "Guruve", "Gutu", "Gwanda", "Gweru", "Headlands", "Hwange", "Hwedza", "Juliasdale", "Kadoma", "Kariba", "Karoi", "Kwekwe", "Lupane", "Macheke", "Mahusekwa", "Maphisa", "Marondera", "Mashava", "Masvingo", "Mazowe", "Mount Darwin", "Murehwa", "Mutoko", "Mvurwi", "Norton", "Nyanga", "Plumtree", "Redcliff", "Rusape", "Ruwa", "Shamva", "Shurugwi", "Triangle", "Tsholotsho", "Victoria Falls", "Zaka", "Zvishavane", "Other (Zimbabwe)"];
 const CATS={jobs:"Jobs & Piece Work",housing:"Housing",community:"Churches & Community"};
 const ICON={jobs:"💼",housing:"🏠",community:"⛪"};
 window.listings=[
@@ -36,3 +36,5 @@ window.SAMPLE_POSTS=[
  {type:"swap",title:"Childcare swap — weekday afternoons",body:"I can mind 2 kids Mon/Wed afternoons in exchange for Fri mornings. Highlands area.",city:"Harare",contact_name:"Gracious",phone:"+263712000006",created_at:new Date(Date.now()-3600e3*50).toISOString()},
  {type:"resource",title:"Free parenting workshop recording",body:"A recorded session on budgeting as a single parent — message me for the link.",city:"Bulawayo",contact_name:"Sipho",phone:"+263713000003",created_at:new Date(Date.now()-3600e3*72).toISOString()}
 ];
+
+listings.forEach((l,i)=>l.id="s-l"+i);SAMPLE_POSTS.forEach((p,i)=>p.id="s-p"+i);
